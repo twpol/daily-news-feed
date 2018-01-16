@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -27,34 +28,52 @@ namespace DailyNewsFeed
             Console.WriteLine($"Processing {Configuration.Key}...");
 
             var uri = new Uri(Configuration["Url"]);
+            var dateTime = DateTimeOffset.UtcNow;
             var document = await LoadItem(uri);
 
             foreach (var block in Configuration.GetSection("Blocks").GetChildren())
             {
-                ProcessBlock(uri, document, block);
+                await ProcessBlock(uri, dateTime, document, block);
             }
         }
 
-        void ProcessBlock(Uri uri, HtmlDocument document, IConfigurationSection configuration)
+        async Task ProcessBlock(Uri uri, DateTimeOffset dateTime, HtmlDocument document, IConfigurationSection configuration)
         {
             Console.WriteLine($"  Processing {configuration.Key}...");
             var blockNode = document.DocumentNode.SelectSingleNode(configuration["BlockSelector"]);
 
             var stories = blockNode.SelectNodes(configuration["StorySelector"]);
+            var seenStories = new HashSet<string>();
+            var storyIndex = 0;
             foreach (var story in stories)
             {
                 var key = GetHtmlValue(story, configuration.GetSection("KeySelector"));
                 var url = new Uri(uri, GetHtmlValue(story, configuration.GetSection("UrlSelector")));
-                var imageUrl = GetHtmlValue(story, configuration.GetSection("ImageUrlSelector"));
+                var imageUrl = new Uri(uri, GetHtmlValue(story, configuration.GetSection("ImageUrlSelector")));
                 var title = GetHtmlValue(story, configuration.GetSection("TitleSelector"));
                 var description = GetHtmlValue(story, configuration.GetSection("DescriptionSelector"));
 
-                Console.WriteLine($"    {key}");
-                Console.WriteLine($"      {url.ToString()}");
-                Console.WriteLine($"      {imageUrl}");
-                Console.WriteLine($"      {title}");
-                Console.WriteLine($"      {description}");
+                if (seenStories.Contains(key))
+                {
+                    continue;
+                }
+                seenStories.Add(key);
+
+                storyIndex++;
+                await Storage.ExecuteNonQueryAsync("INSERT INTO Stories (Date, Site, Block, Position, Key, Url, ImageUrl, Title, Description) VALUES (@Param0, @Param1, @Param2, @Param3, @Param4, @Param5, @Param6, @Param7, @Param8)",
+                    dateTime,
+                    Configuration.Key,
+                    configuration.Key,
+                    storyIndex,
+                    key,
+                    url.ToString(),
+                    imageUrl.ToString(),
+                    title,
+                    description
+                );
             }
+
+            Console.WriteLine($"    Collected {storyIndex} stories");
         }
 
         static readonly Regex WhitespacePattern = new Regex(@"\s+");

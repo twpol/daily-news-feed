@@ -19,14 +19,18 @@ namespace DailyNewsFeed
         {
             try
             {
-                var configuration = LoadConfiguration(args);
+                ParseCommandLine(args, out var config, out var fetch, out var summary);
+                var configuration = LoadConfiguration(config);
                 var storage = await LoadStorage(configuration);
                 var client = CreateHttpClient();
 
-                foreach (var section in configuration.GetSection("Sites").GetChildren())
+                if (fetch.Value)
                 {
-                    var scanner = new Scanner(section, storage, client);
-                    await scanner.Process();
+                    foreach (var section in configuration.GetSection("Sites").GetChildren())
+                    {
+                        var scanner = new Scanner(section, storage, client);
+                        await scanner.Process();
+                    }
                 }
 
                 storage.Close();
@@ -37,22 +41,31 @@ namespace DailyNewsFeed
             }
         }
 
-        static IConfigurationRoot LoadConfiguration(string[] args)
+        static void ParseCommandLine(string[] args, out CommandLineParser.Arguments.FileArgument config, out CommandLineParser.Arguments.SwitchArgument fetch, out CommandLineParser.Arguments.SwitchArgument summary)
         {
-            var config = new CommandLineParser.Arguments.FileArgument('c', "config")
+            config = new CommandLineParser.Arguments.FileArgument('c', "config")
             {
                 DefaultValue = new FileInfo("config.json")
             };
+
+            fetch = new CommandLineParser.Arguments.SwitchArgument('f', "fetch", false);
+
+            summary = new CommandLineParser.Arguments.SwitchArgument('s', "summary", false);
 
             var commandLineParser = new CommandLineParser.CommandLineParser()
             {
                 Arguments = {
                     config,
+                    fetch,
+                    summary,
                 }
             };
 
             commandLineParser.ParseCommandLine(args);
+        }
 
+        static IConfigurationRoot LoadConfiguration(CommandLineParser.Arguments.FileArgument config)
+        {
             return new ConfigurationBuilder()
                 .AddJsonFile(config.Value.FullName, true)
                 .Build();
@@ -62,7 +75,7 @@ namespace DailyNewsFeed
         {
             var storage = new Storage(configuration.GetConnectionString("Storage"));
             await storage.Open();
-            await storage.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS Stories (Date DATETIME, Site text, Block text, Position integer, Key text, Url text, ImageUrl text, Title text, Description text)");
+            await storage.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS Stories (Date datetime, Site text, Block text, Position integer, Key text, Url text, ImageUrl text, Title text, Description text)");
             return storage;
         }
 
