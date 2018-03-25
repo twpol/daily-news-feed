@@ -41,13 +41,14 @@ namespace DailyNewsFeed
         {
             Console.WriteLine($"  Processing {configuration.Key}...");
             var blockNode = document.DocumentNode.SelectSingleNode(configuration["BlockSelector"]);
+            var keyRegExp = new Regex(configuration["KeyRegExp"]);
 
             var stories = blockNode.SelectNodes(configuration["StorySelector"]);
             var seenStories = new HashSet<string>();
             var storyIndex = 0;
             foreach (var story in stories)
             {
-                var key = GetHtmlValue(story, configuration.GetSection("KeySelector"));
+                var key = keyRegExp.Match(GetHtmlValue(story, configuration.GetSection("KeySelector"))).Groups[1].Value;
                 var url = new Uri(uri, GetHtmlValue(story, configuration.GetSection("UrlSelector")));
                 var imageUrl = new Uri(uri, GetHtmlValue(story, configuration.GetSection("ImageUrlSelector")));
                 var title = GetHtmlValue(story, configuration.GetSection("TitleSelector"));
