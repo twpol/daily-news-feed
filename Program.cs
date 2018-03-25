@@ -33,6 +33,15 @@ namespace DailyNewsFeed
                     }
                 }
 
+                if (summary.Value)
+                {
+                    foreach (var section in configuration.GetSection("Sites").GetChildren())
+                    {
+                        var sumariser = new Sumariser(section, storage);
+                        await sumariser.Process();
+                    }
+                }
+
                 storage.Close();
             }
             catch (CommandLineParser.Exceptions.CommandLineException e)

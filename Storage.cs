@@ -34,6 +34,11 @@ namespace DailyNewsFeed
             return await CreateCommand(commandText, parameters).ExecuteScalarAsync();
         }
 
+        public async Task<DbDataReader> ExecuteReaderAsync(string commandText, params object[] parameters)
+        {
+            return await CreateCommand(commandText, parameters).ExecuteReaderAsync();
+        }
+
         private DbCommand CreateCommand(string commandText, object[] parameters)
         {
             var command = Connection.CreateCommand();
