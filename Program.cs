@@ -19,9 +19,9 @@ namespace DailyNewsFeed
         {
             try
             {
-                ParseCommandLine(args, out var config, out var fetch, out var summary);
+                ParseCommandLine(args, out var config, out var debug, out var fetch, out var summary);
                 var configuration = LoadConfiguration(config);
-                var storage = await LoadStorage(configuration);
+                var storage = await LoadStorage(configuration, debug.Value);
                 var client = CreateHttpClient();
 
                 if (fetch.Value)
@@ -50,12 +50,14 @@ namespace DailyNewsFeed
             }
         }
 
-        static void ParseCommandLine(string[] args, out CommandLineParser.Arguments.FileArgument config, out CommandLineParser.Arguments.SwitchArgument fetch, out CommandLineParser.Arguments.SwitchArgument summary)
+        static void ParseCommandLine(string[] args, out CommandLineParser.Arguments.FileArgument config, out CommandLineParser.Arguments.SwitchArgument debug, out CommandLineParser.Arguments.SwitchArgument fetch, out CommandLineParser.Arguments.SwitchArgument summary)
         {
             config = new CommandLineParser.Arguments.FileArgument('c', "config")
             {
                 DefaultValue = new FileInfo("config.json")
             };
+
+            debug = new CommandLineParser.Arguments.SwitchArgument('d', "debug", false);
 
             fetch = new CommandLineParser.Arguments.SwitchArgument('f', "fetch", false);
 
@@ -65,6 +67,7 @@ namespace DailyNewsFeed
             {
                 Arguments = {
                     config,
+                    debug,
                     fetch,
                     summary,
                 }
@@ -80,9 +83,9 @@ namespace DailyNewsFeed
                 .Build();
         }
 
-        static async Task<Storage> LoadStorage(IConfigurationRoot configuration)
+        static async Task<Storage> LoadStorage(IConfigurationRoot configuration, bool debug)
         {
-            var storage = new Storage(configuration.GetConnectionString("Storage"));
+            var storage = new Storage(configuration.GetConnectionString("Storage"), debug);
             await storage.Open();
             await storage.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS Stories (Date datetime, Site text, Block text, Position integer, Key text, Url text, ImageUrl text, Title text, Description text)");
             return storage;
