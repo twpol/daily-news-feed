@@ -88,11 +88,12 @@ namespace DailyNewsFeed
                     case "Constant":
                         return type.Value;
                     case "Attribute":
+                        string value = null;
                         foreach (var attribute in type.GetChildren())
                         {
-                            return WebUtility.HtmlDecode(node.SelectSingleNode(attribute.Value)?.Attributes?[attribute.Key]?.Value ?? $"<default:{attribute.Path}>");
+                            value = node.SelectSingleNode(attribute.Value)?.Attributes?[attribute.Key]?.Value ?? value;
                         }
-                        goto default;
+                        return WebUtility.HtmlDecode(value ?? $"<default:{type.Path}>");
                     case "InnerHtml":
                         return node.SelectSingleNode(type.Value).InnerHtml;
                     case "InnerText":
