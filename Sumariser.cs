@@ -18,12 +18,14 @@ namespace DailyNewsFeed
 
         public async Task Process()
         {
+            var summaryConfig = Configuration.GetSection("Summary");
             var endDTO = DateTimeOffset.UtcNow;
-            var startDTO = endDTO.AddSeconds(-uint.Parse(Configuration["SummaryTimePeriodS"]));
+            var startDTO = endDTO.AddSeconds(-uint.Parse(summaryConfig["TimePeriodS"]));
 
-            if (Configuration["SummaryOutputHtmlFile"] != null)
+            if (summaryConfig["OutputHtmlFile"] != null)
             {
-                var outfileHtmlFile = new FileInfo(Configuration["SummaryOutputHtmlFile"]);
+                var outfileHtmlFile = new FileInfo(summaryConfig["OutputHtmlFile"]);
+                var maximumScore = float.Parse(summaryConfig["MaximumScore"] ?? "-1");
                 using (var writer = outfileHtmlFile.CreateText())
                 {
                     writer.WriteLine("<!doctype html>");
@@ -51,6 +53,7 @@ namespace DailyNewsFeed
                         var reader = await Storage.ExecuteReaderAsync("SELECT Key, SUM(Position)*1.0/COUNT()/COUNT() As Position, SUM(Position), COUNT(), Url, ImageUrl, Title, Description FROM Stories WHERE Site = @Param0 AND Block = @Param1 AND @Param2 < Date AND Date < @Param3 GROUP BY Key ORDER BY Position ASC", Configuration.Key, block.Key, startDTO, endDTO);
                         while (await reader.ReadAsync())
                         {
+                            if (maximumScore >= 0 && reader.GetDouble(1) > maximumScore) continue;
                             writer.WriteLine("                        <li class=\"media\">");
                             writer.WriteLine("                            <div class=\"media-body\">");
                             writer.WriteLine($"                                <h5 class=\"my-1\"><a href=\"{reader.GetString(4)}\">{reader.GetString(6)}</a></h5>");
