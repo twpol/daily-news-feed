@@ -27,12 +27,12 @@ namespace DailyNewsFeed
         {
             Console.WriteLine($"Processing {Configuration.Key}...");
 
-            var uri = new Uri(Configuration["Url"]);
             var dateTime = DateTimeOffset.UtcNow;
-            var document = await LoadItem(uri);
 
             foreach (var block in Configuration.GetSection("Blocks").GetChildren())
             {
+                var uri = new Uri(block["Url"]);
+                var document = await LoadItem(uri);
                 await ProcessBlock(uri, dateTime, document, block);
             }
         }
