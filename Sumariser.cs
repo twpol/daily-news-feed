@@ -34,6 +34,7 @@ namespace DailyNewsFeed
                     writer.WriteLine("    <meta charset=\"utf-8\">");
                     writer.WriteLine("    <meta http-equiv=\"x-ua-compatible\" content=\"ie=edge\">");
                     writer.WriteLine($"    <title>{endDTO:yyyy-MM-dd} {Configuration.Key} Daily News Feed</title>");
+                    writer.WriteLine("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">");
                     writer.WriteLine("    <link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css\" integrity=\"sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO\" crossorigin=\"anonymous\">");
                     writer.WriteLine("    <style>");
                     writer.WriteLine("        .media > img { max-height: 5rem; }");
