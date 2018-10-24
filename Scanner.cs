@@ -60,6 +60,18 @@ namespace DailyNewsFeed
                 }
                 seenStories.Add(key);
 
+                var insideDocument = await LoadItem(url);
+                var insideImageUrl = new Uri(url, GetHtmlValue(insideDocument.DocumentNode, configuration.GetSection("InsideImageUrlSelector")));
+                var insideTitle = GetHtmlValue(insideDocument.DocumentNode, configuration.GetSection("InsideTitleSelector"));
+                var insideDescription = GetHtmlValue(insideDocument.DocumentNode, configuration.GetSection("InsideDescriptionSelector"));
+
+                Console.WriteLine(imageUrl.ToString());
+                Console.WriteLine(insideImageUrl.ToString());
+                Console.WriteLine(title);
+                Console.WriteLine(insideTitle);
+                Console.WriteLine(description);
+                Console.WriteLine(insideDescription);
+
                 storyIndex++;
                 await Storage.ExecuteNonQueryAsync("INSERT INTO Stories (Date, Site, Block, Position, Key, Url, ImageUrl, Title, Description) VALUES (@Param0, @Param1, @Param2, @Param3, @Param4, @Param5, @Param6, @Param7, @Param8)",
                     dateTime,
@@ -68,9 +80,9 @@ namespace DailyNewsFeed
                     storyIndex,
                     key,
                     url.ToString(),
-                    imageUrl.ToString(),
-                    title,
-                    description
+                    GetFirstValue(insideImageUrl.ToString(), imageUrl.ToString()),
+                    GetFirstValue(insideTitle, title),
+                    GetFirstValue(insideDescription, description)
                 );
             }
 
@@ -109,6 +121,18 @@ namespace DailyNewsFeed
             }
 
             throw new InvalidDataException($"Missing value type for GetHtmlValue: {configuration.Path}");
+        }
+
+        static string GetFirstValue(params string[] htmlValues)
+        {
+            foreach (var htmlValue in htmlValues)
+            {
+                if (htmlValue.Length > 0 && !htmlValue.Contains("<default:"))
+                {
+                    return htmlValue;
+                }
+            }
+            return null;
         }
 
         async Task<HtmlDocument> LoadItem(Uri uri)
