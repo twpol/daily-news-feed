@@ -55,14 +55,14 @@ namespace DailyNewsFeed
                         while (await reader.ReadAsync())
                         {
                             if (maximumScore >= 0 && reader.GetDouble(1) > maximumScore) continue;
-                            writer.WriteLine("                        <li class=\"media\">");
-                            writer.WriteLine("                            <div class=\"media-body\">");
+                            writer.WriteLine($"                        <li class=\"media\">");
+                            writer.WriteLine($"                            <!-- score={reader.GetDouble(1)}, sum={reader.GetInt32(2)}, count={reader.GetInt32(3)} -->");
+                            writer.WriteLine($"                            <div class=\"media-body\">");
                             writer.WriteLine($"                                <h5 class=\"my-1\"><a href=\"{reader.GetString(4)}\">{reader.GetString(6)}</a></h5>");
                             writer.WriteLine($"                                <p class=\"my-1\">{reader.GetString(7)}</p>");
-                            writer.WriteLine($"                                <p class=\"my-1 text-muted\">{reader.GetDouble(1)}, {reader.GetInt32(2)}/{reader.GetInt32(3)}</p>");
-                            writer.WriteLine("                            </div>");
+                            writer.WriteLine($"                            </div>");
                             writer.WriteLine($"                            <img class=\"ml-3\" src=\"{reader.GetString(5)}\">");
-                            writer.WriteLine("                        </li>");
+                            writer.WriteLine($"                        </li>");
                         }
                         writer.WriteLine("                    </ol>");
                         writer.WriteLine("            </li>");
