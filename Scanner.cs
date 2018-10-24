@@ -48,7 +48,13 @@ namespace DailyNewsFeed
             var storyIndex = 0;
             foreach (var story in stories)
             {
-                var key = keyRegExp.Match(GetHtmlValue(story, configuration.GetSection("KeySelector"))).Groups[1].Value;
+                var keyMatch = keyRegExp.Match(GetHtmlValue(story, configuration.GetSection("KeySelector")));
+                if (!keyMatch.Success)
+                {
+                    continue;
+                }
+
+                var key = keyMatch.Groups[1].Value;
                 var url = new Uri(uri, GetHtmlValue(story, configuration.GetSection("UrlSelector")));
                 var imageUrl = new Uri(uri, GetHtmlValue(story, configuration.GetSection("ImageUrlSelector")));
                 var title = GetHtmlValue(story, configuration.GetSection("TitleSelector"));
