@@ -65,13 +65,6 @@ namespace DailyNewsFeed
                 var insideTitle = GetHtmlValue(insideDocument.DocumentNode, configuration.GetSection("InsideTitleSelector"));
                 var insideDescription = GetHtmlValue(insideDocument.DocumentNode, configuration.GetSection("InsideDescriptionSelector"));
 
-                Console.WriteLine(imageUrl.ToString());
-                Console.WriteLine(insideImageUrl.ToString());
-                Console.WriteLine(title);
-                Console.WriteLine(insideTitle);
-                Console.WriteLine(description);
-                Console.WriteLine(insideDescription);
-
                 storyIndex++;
                 await Storage.ExecuteNonQueryAsync("INSERT INTO Stories (Date, Site, Block, Position, Key, Url, ImageUrl, Title, Description) VALUES (@Param0, @Param1, @Param2, @Param3, @Param4, @Param5, @Param6, @Param7, @Param8)",
                     dateTime,
