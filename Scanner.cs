@@ -41,9 +41,20 @@ namespace DailyNewsFeed
         {
             Console.WriteLine($"  Processing {configuration.Key}...");
             var blockNode = document.DocumentNode.SelectSingleNode(configuration["BlockSelector"]);
-            var keyRegExp = new Regex(configuration["KeyRegExp"]);
+            if (blockNode == null)
+            {
+                Console.WriteLine($"    No node matches BlockSelector {configuration["BlockSelector"]}");
+                return;
+            }
 
+            var keyRegExp = new Regex(configuration["KeyRegExp"]);
             var stories = blockNode.SelectNodes(configuration["StorySelector"]);
+            if (stories == null)
+            {
+                Console.WriteLine($"    No nodes match StorySelector {configuration["StorySelector"]}");
+                return;
+            }
+
             var seenStories = new HashSet<string>();
             var storyIndex = 0;
             foreach (var story in stories)
@@ -107,11 +118,15 @@ namespace DailyNewsFeed
                         }
                         return WebUtility.HtmlDecode(value ?? $"<default:{type.Path}>");
                     case "InnerHtml":
-                        return node.SelectSingleNode(type.Value).InnerHtml;
+                        return node.SelectSingleNode(type.Value)?.InnerHtml ?? $"<default:{type.Path}>";
                     case "InnerText":
                         return WhitespacePattern.Replace(WebUtility.HtmlDecode(node.SelectSingleNode(type.Value)?.InnerText ?? $"<default:{type.Path}>"), " ").Trim();
                     case "ResponsiveImage":
                         var img = node.SelectSingleNode(type.Value);
+                        if (img == null)
+                        {
+                            return $"<default:{type.Path}>";
+                        }
                         var dataSrc = img.GetAttributeValue("data-src", "");
                         var dataWidths = img.GetAttributeValue("data-widths", "").Replace("[", "").Replace("]", "").Split(',');
                         return dataSrc.Replace("{width}", dataWidths[dataWidths.Length - 1]);
