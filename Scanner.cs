@@ -95,6 +95,24 @@ namespace DailyNewsFeed
                     GetFirstValue(insideTitle, title),
                     GetFirstValue(insideLede, insideDescription, description)
                 );
+
+                var tags = insideDocument.DocumentNode.SelectNodes(configuration["InsideTagsSelector"] ?? "./no-match");
+                if (tags != null)
+                {
+                    foreach (var tag in tags)
+                    {
+                        var tagUrl = new Uri(uri, tag.Attributes?["href"]?.Value);
+                        await Storage.ExecuteNonQueryAsync("INSERT INTO Tags (Url, Title) VALUES (@Param0, @Param1) ON CONFLICT DO NOTHING",
+                            tag.InnerText,
+                            tagUrl.ToString()
+                        );
+                        await Storage.ExecuteNonQueryAsync("INSERT INTO StoryTags (Date, Story, Tag) VALUES (@Param0, @Param1, @Param2) ON CONFLICT DO NOTHING",
+                            dateTime,
+                            url.ToString(),
+                            tagUrl.ToString()
+                        );
+                    }
+                }
             }
 
             Console.WriteLine($"    Collected {storyIndex} stories");

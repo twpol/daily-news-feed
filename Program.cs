@@ -54,7 +54,7 @@ namespace DailyNewsFeed
         {
             config = new CommandLineParser.Arguments.FileArgument('c', "config")
             {
-                DefaultValue = new FileInfo("config.json")
+                ForcedDefaultValue = new FileInfo("config.json")
             };
 
             debug = new CommandLineParser.Arguments.SwitchArgument('d', "debug", false);
@@ -88,6 +88,8 @@ namespace DailyNewsFeed
             var storage = new Storage(configuration.GetConnectionString("Storage"), debug);
             await storage.Open();
             await storage.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS Stories (Date datetime, Site text, Block text, Position integer, Key text, Url text, ImageUrl text, Title text, Description text)");
+            await storage.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS StoryTags (Date datetime, Story text, Tag text)");
+            await storage.ExecuteNonQueryAsync("CREATE TABLE IF NOT EXISTS Tags (Url text, Title text, UNIQUE (Url))");
             return storage;
         }
 
