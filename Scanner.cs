@@ -103,8 +103,8 @@ namespace DailyNewsFeed
                     {
                         var tagUrl = new Uri(uri, tag.Attributes?["href"]?.Value);
                         await Storage.ExecuteNonQueryAsync("INSERT INTO Tags (Url, Title) VALUES (@Param0, @Param1) ON CONFLICT DO NOTHING",
-                            tag.InnerText,
-                            tagUrl.ToString()
+                            tagUrl.ToString(),
+                            tag.InnerText
                         );
                         await Storage.ExecuteNonQueryAsync("INSERT INTO StoryTags (Date, Story, Tag) VALUES (@Param0, @Param1, @Param2) ON CONFLICT DO NOTHING",
                             dateTime,
