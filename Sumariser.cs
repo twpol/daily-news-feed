@@ -59,7 +59,14 @@ namespace DailyNewsFeed
                             writer.WriteLine($"                            <!-- score={reader.GetDouble(1)}, sum={reader.GetInt32(2)}, count={reader.GetInt32(3)} -->");
                             writer.WriteLine($"                            <div class=\"media-body\">");
                             writer.WriteLine($"                                <h5 class=\"my-1\"><a href=\"{reader.GetString(4)}\">{reader.GetString(6)}</a></h5>");
-                            writer.WriteLine($"                                <p class=\"my-1\">{reader.GetString(7)}</p>");
+                            writer.WriteLine($"                                <p class=\"my-1\">");
+                            var tagReader = await Storage.ExecuteReaderAsync("SELECT Tags.Url, Tags.Title FROM Tags JOIN StoryTags WHERE Tags.Url = StoryTags.Tag AND StoryTags.Story = @Param0", reader.GetString(4));
+                            while (await tagReader.ReadAsync())
+                            {
+                                writer.WriteLine($"                                    <span class=\"badge badge-primary\">{tagReader.GetString(1)}</span>");
+                            }
+                            writer.WriteLine($"                                    {reader.GetString(7)}");
+                            writer.WriteLine($"                                </p>");
                             writer.WriteLine($"                            </div>");
                             writer.WriteLine($"                            <img class=\"ml-3\" src=\"{reader.GetString(5)}\">");
                             writer.WriteLine($"                        </li>");
