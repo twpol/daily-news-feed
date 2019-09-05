@@ -57,6 +57,7 @@ namespace DailyNewsFeed
 
             var seenStories = new HashSet<string>();
             var storyIndex = 0;
+            var tagCount = 0;
             foreach (var story in stories)
             {
                 var keyMatch = keyRegExp.Match(GetHtmlValue(story, configuration.GetSection("KeySelector")));
@@ -102,6 +103,8 @@ namespace DailyNewsFeed
                     foreach (var tag in tags)
                     {
                         var tagUrl = new Uri(uri, tag.Attributes?["href"]?.Value);
+
+                        tagCount++;
                         await Storage.ExecuteNonQueryAsync("INSERT INTO Tags (Url, Title) VALUES (@Param0, @Param1) ON CONFLICT DO NOTHING",
                             tagUrl.ToString(),
                             tag.InnerText
@@ -115,7 +118,7 @@ namespace DailyNewsFeed
                 }
             }
 
-            Console.WriteLine($"    Collected {storyIndex} stories");
+            Console.WriteLine($"    Collected {storyIndex} stories with {tagCount} tags");
         }
 
         static readonly Regex WhitespacePattern = new Regex(@"\s+");
