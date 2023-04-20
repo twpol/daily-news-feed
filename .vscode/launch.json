@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.2/Daily News Feed.dll",
+            "program": "${workspaceFolder}/bin/Debug/net6.0/Daily News Feed.dll",
             "args": ["--debug", "--fetch", "--summary"],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
