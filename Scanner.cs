@@ -50,14 +50,14 @@ namespace DailyNewsFeed
                 return;
             }
 
-            var keyRegExp = new Regex(configuration["KeyRegExp"]);
-            var stories = blockNode.SelectMany(node => node.SelectNodes(configuration["StorySelector"]));
+            var stories = blockNode.SelectMany(node => node.SelectNodes(configuration["StorySelector"]) ?? Enumerable.Empty<HtmlNode>());
             if (stories.Count() == 0)
             {
                 Console.Error.WriteLine($"No nodes match StorySelector {configuration["StorySelector"]}");
                 return;
             }
 
+            var keyRegExp = new Regex(configuration["KeyRegExp"]);
             var seenStories = new HashSet<string>();
             var storyIndex = 0;
             var tagCount = 0;
