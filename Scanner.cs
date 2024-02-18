@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -15,12 +16,14 @@ namespace DailyNewsFeed
         readonly IConfigurationSection Configuration;
         readonly Storage Storage;
         readonly HttpClient Client;
+        readonly bool Debug;
 
-        public Scanner(IConfigurationSection configuration, Storage storage, HttpClient client)
+        public Scanner(IConfigurationSection configuration, Storage storage, HttpClient client, bool debug)
         {
             Configuration = configuration;
             Storage = storage;
             Client = client;
+            Debug = debug;
         }
 
         public async Task Process()
@@ -40,18 +43,18 @@ namespace DailyNewsFeed
         async Task ProcessBlock(Uri uri, DateTimeOffset dateTime, HtmlDocument document, IConfigurationSection configuration)
         {
             Console.WriteLine($"  Processing {configuration.Key}...");
-            var blockNode = document.DocumentNode.SelectSingleNode(configuration["BlockSelector"]);
+            var blockNode = document.DocumentNode.SelectNodes(configuration["BlockSelector"]);
             if (blockNode == null)
             {
-                Console.WriteLine($"    No node matches BlockSelector {configuration["BlockSelector"]}");
+                Console.Error.WriteLine($"No nodes match BlockSelector {configuration["BlockSelector"]}");
                 return;
             }
 
             var keyRegExp = new Regex(configuration["KeyRegExp"]);
-            var stories = blockNode.SelectNodes(configuration["StorySelector"]);
-            if (stories == null)
+            var stories = blockNode.SelectMany(node => node.SelectNodes(configuration["StorySelector"]));
+            if (stories.Count() == 0)
             {
-                Console.WriteLine($"    No nodes match StorySelector {configuration["StorySelector"]}");
+                Console.Error.WriteLine($"No nodes match StorySelector {configuration["StorySelector"]}");
                 return;
             }
 
@@ -63,14 +66,15 @@ namespace DailyNewsFeed
                 var keyMatch = keyRegExp.Match(GetHtmlValue(story, configuration.GetSection("KeySelector")));
                 if (!keyMatch.Success)
                 {
+                    Console.Error.WriteLine($"No match for KeySelector on {story.OuterHtml}");
                     continue;
                 }
 
                 var key = keyMatch.Groups[1].Value;
-                var url = new Uri(uri, GetHtmlValue(story, configuration.GetSection("UrlSelector")));
                 var imageUrl = new Uri(uri, GetHtmlValue(story, configuration.GetSection("ImageUrlSelector")));
                 var title = GetHtmlValue(story, configuration.GetSection("TitleSelector"));
                 var description = GetHtmlValue(story, configuration.GetSection("DescriptionSelector"));
+                var url = new Uri(uri, GetHtmlValue(story, configuration.GetSection("UrlSelector")));
 
                 if (seenStories.Contains(key))
                 {
@@ -83,6 +87,19 @@ namespace DailyNewsFeed
                 var insideTitle = GetHtmlValue(insideDocument.DocumentNode, configuration.GetSection("InsideTitleSelector"));
                 var insideDescription = GetHtmlValue(insideDocument.DocumentNode, configuration.GetSection("InsideDescriptionSelector"));
                 var insideLede = GetHtmlValue(insideDocument.DocumentNode, configuration.GetSection("InsideLedeSelector"));
+
+                if (Debug)
+                {
+                    Console.WriteLine($"    - Key:           {key}");
+                    Console.WriteLine($"      Image:         {imageUrl}");
+                    Console.WriteLine($"      Title:         {title}");
+                    Console.WriteLine($"      Description:   {description}");
+                    Console.WriteLine($"      URL:           {url}");
+                    Console.WriteLine($"        Image:       {insideImageUrl}");
+                    Console.WriteLine($"        Title:       {insideTitle}");
+                    Console.WriteLine($"        Description: {insideDescription}");
+                    Console.WriteLine($"        Lede:        {insideLede}");
+                }
 
                 storyIndex++;
                 await Storage.ExecuteNonQueryAsync("INSERT INTO Stories (Date, Site, Block, Position, Key, Url, ImageUrl, Title, Description) VALUES (@Param0, @Param1, @Param2, @Param3, @Param4, @Param5, @Param6, @Param7, @Param8)",

@@ -28,7 +28,7 @@ namespace DailyNewsFeed
                 {
                     foreach (var section in configuration.GetSection("Sites").GetChildren())
                     {
-                        var scanner = new Scanner(section, storage, client);
+                        var scanner = new Scanner(section, storage, client, debug.Value);
                         await scanner.Process();
                     }
                 }
